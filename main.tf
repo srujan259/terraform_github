@@ -1,16 +1,10 @@
 #multiple
 provider "github" {
-  token = "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"
+  token = data.aws_secretsmanager_secret_version.pat.secret_string
 }
 
-variable "repository_names" {
-  type    = list(string)
-  default = ["argocd1", "argocd-gitops"]
-}
-
-data "github_repository" "existing_repos" {
-  count = length(var.repository_names)
-  name  = var.repository_names[count.index]
+provider "aws" {
+  region = "us-east-1"
 }
 
 resource "github_branch_protection" "snyk_protection" {
@@ -20,12 +14,11 @@ resource "github_branch_protection" "snyk_protection" {
 
   required_status_checks {
     strict   = true
-    contexts = ["snyk"]
+    contexts = var.required_status_checks[*].context
   }
-
   required_pull_request_reviews {
-    dismiss_stale_reviews = false
-    require_code_owner_reviews = true
+    dismiss_stale_reviews           = false
+    require_code_owner_reviews      = false
     required_approving_review_count = 1
   }
 }
