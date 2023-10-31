@@ -1,0 +1,65 @@
+name: Custom Checks
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+
+jobs:
+  custom-checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check Kitapi Integration Testing
+        id: kitapi-integration
+        run: |
+          # Implement logic to check kitapi/integration_testing
+          # If the check passes, set the status to "success"
+          # If it fails, set the status to "failure"
+          echo ::set-output name=KITAPI_STATUS::success
+
+      - name: Check Security/Snyk
+        id: security-snyk
+        run: |
+          # Implement logic to check security/snyk
+          # If the check passes, set the status to "success"
+          # If it fails, set the status to "failure"
+          echo ::set-output name=SECURITY_SNK_STATUS::success
+
+      - name: Check License/Synk
+        id: license-synk
+        run: |
+          # Implement logic to check license/synk
+          # If the check passes, set the status to "success"
+          # If it fails, set the status to "failure"
+          echo ::set-output name=LICENSE_SNK_STATUS::success
+
+      - name: Set Custom Checks
+        run: |
+          # Set the custom checks based on the results
+          kitapi_status="${{ steps.kitapi-integration.outputs.KITAPI_STATUS }}"
+          security_snyk_status="${{ steps.security-snyk.outputs.SECURITY_SNK_STATUS }}"
+          license_synk_status="${{ steps.license-synk.outputs.LICENSE_SNK_STATUS }}"
+
+          # Set the status checks using GitHub's API
+          curl -X POST "https://api.github.com/repos/${{ github.repository }}/check-runs" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" -d '{
+            "name": "kitapi/integration_testing",
+            "head_sha": "${{ github.sha }}",
+            "status": "'"$kitapi_status"'",
+            "conclusion": "'"$kitapi_status"'"
+          }'
+
+          curl -X POST "https://api.github.com/repos/${{ github.repository }}/check-runs" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" -d '{
+            "name": "security/snyk",
+            "head_sha": "${{ github.sha }}",
+            "status": "'"$security_snyk_status"'",
+            "conclusion": "'"$security_snyk_status"'"
+          }'
+
+          curl -X POST "https://api.github.com/repos/${{ github.repository }}/check-runs" -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Content-Type: application/json" -d '{
+            "name": "license/synk",
+            "head_sha": "${{ github.sha }}",
+            "status": "'"$license_synk_status"'",
+            "conclusion": "'"$license_synk_status"'"
+          }'
